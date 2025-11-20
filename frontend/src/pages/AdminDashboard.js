@@ -11,18 +11,30 @@ export default function AdminDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          nav("/admin/login");
+          return;
+        }
         const d = await API.get("/doctors");
         setDoctorCount(d.data?.length || 0);
 
-        const a = await API.get("/admin/appointments");
-        const list = a.data || [];
-        setAppointmentCount(list.length);
-        const setIds = new Set(list.map((x) => x.patient?._id || String(x.patient || "")));
-        setPatientCount(setIds.size);
+        try {
+          const a = await API.get("/admin/appointments");
+          const list = a.data || [];
+          setAppointmentCount(list.length);
+          const setIds = new Set(list.map((x) => x.patient?._id || String(x.patient || "")));
+          setPatientCount(setIds.size);
+        } catch (eAppt) {
+          const status = eAppt.response?.status;
+          if (status === 401 || status === 403) {
+            nav("/admin/login");
+          }
+        }
       } catch (e) {}
     };
     load();
-  }, []);
+  }, [nav]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
@@ -43,7 +55,7 @@ export default function AdminDashboard() {
               <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Dashboard</div>
               <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
               <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-              <Link to="/admin/doctors/pending" className="block px-3 py-2 rounded-md hover:bg-slate-50">Approvals</Link>
+              
               <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
             </nav>
           </div>

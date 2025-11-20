@@ -16,7 +16,7 @@ export default function DoctorLogin() {
     setLoading(true);
     try {
       const { data } = await API.post("/auth/login", {
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password: password.trim(),
       });
       if (data?.user?.role !== "doctor") {

@@ -138,44 +138,45 @@ router.put("/:id/complete", authenticate, async (req, res) => {
 });
 
 router.post("/:id/prescription", authenticate, async (req, res) => {
-    const { id } = req.params;
-    const { text } = req.body;
-    const appt = await Appointment.findById(id).populate("patient", "name email");
-    if (!appt) return res.status(404).json({ message: "Appointment not found" });
-    if (req.user.role !== "doctor" || String(appt.doctor) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
-    appt.prescriptionText = text || "";
-    await appt.save();
+  const { id } = req.params;
+  const { text } = req.body;
+  const appt = await Appointment.findById(id).populate("patient", "name email");
+  if (!appt) return res.status(404).json({ message: "Appointment not found" });
+  if (req.user.role !== "doctor" || String(appt.doctor) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+  appt.prescriptionText = text || "";
+  await appt.save();
 
-    const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/prescription/${id}`;
-    try {
-        if (appt.patient.email) await sendMail(appt.patient.email, "Prescription Available", `Your prescription is ready: ${url}`);
-    } catch (e) {}
-    res.json({ ok: true });
-});
-
-router.get("/:id", authenticate, async (req, res) => {
-    const { id } = req.params;
-    const appt = await Appointment.findById(id)
-        .populate("doctor", "name email")
-        .populate("patient", "name email");
-    if (!appt) return res.status(404).json({ message: "Appointment not found" });
-    if (String(appt.patient._id) !== String(req.user._id) && String(appt.doctor._id) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
-    res.json(appt);
+  const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/prescription/${id}`;
+  try {
+    if (appt.patient.email) await sendMail(appt.patient.email, "Prescription Available", `Your prescription is ready: ${url}`);
+  } catch (e) {}
+  res.json({ ok: true });
 });
 
 // -----------------------------------
 // View my appointments (patient or doctor)
 // -----------------------------------
 router.get("/mine", authenticate, async (req, res) => {
-    const filter = req.user.role === "doctor"
-        ? { doctor: req.user._id }
-        : { patient: req.user._id };
+  const filter = req.user.role === "doctor"
+    ? { doctor: req.user._id }
+    : { patient: req.user._id };
 
-    const list = await Appointment.find(filter)
-        .populate("doctor", "name")
-        .populate("patient", "name");
+  const list = await Appointment.find(filter)
+    .populate("doctor", "name")
+    .populate("patient", "name");
 
-    res.json(list);
+  res.json(list);
 });
+
+router.get("/:id", authenticate, async (req, res) => {
+  const { id } = req.params;
+  const appt = await Appointment.findById(id)
+    .populate("doctor", "name email")
+    .populate("patient", "name email");
+  if (!appt) return res.status(404).json({ message: "Appointment not found" });
+  if (String(appt.patient._id) !== String(req.user._id) && String(appt.doctor._id) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+  res.json(appt);
+});
+
 
 module.exports = router;

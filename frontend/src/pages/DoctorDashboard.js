@@ -38,15 +38,9 @@ export default function DoctorDashboard() {
           if (alt.length) items = alt;
         }
 
-        try {
-          const today = await API.get("/appointments/today");
-          setLatestToday(today.data || []);
-          if (!items.length && (today.data || []).length) items = today.data;
-        } catch (eToday) {
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const filtered = (items || []).filter((a) => a.date === todayStr);
-          setLatestToday(filtered);
-        }
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const filtered = (items || []).filter((a) => a.date === todayStr);
+        setLatestToday(filtered);
 
         setList(items);
       } catch (e) {

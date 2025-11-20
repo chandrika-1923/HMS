@@ -6,6 +6,8 @@ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 specializations: [String],
 qualifications: [String],
 experienceYears: Number,
+about: String,
+photoBase64: String,
 registrationNumber: String,
 clinic: {
 name: String,

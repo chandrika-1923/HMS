@@ -11,9 +11,13 @@ export default function Contact() {
         <div className="text-center text-slate-600 tracking-widest">CONTACT US</div>
         <div className="mt-6 grid md:grid-cols-2 gap-8 items-start">
           <img
-            src="https://images.unsplash.com/photo-1629909613651-c0c98c3f75f0?q=80&w=1200&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
             alt="Clinic"
-            className="rounded-xl shadow-sm"
+            className="rounded-xl shadow-sm w-full h-80 md:h-[360px] object-cover"
+            onError={(e) => {
+              const fb = "https://images.unsplash.com/photo-1588771930293-719d3d7da06a?q=80&w=1200&auto=format&fit=crop";
+              if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
+            }}
           />
           <div>
             <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">

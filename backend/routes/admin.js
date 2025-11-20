@@ -16,21 +16,26 @@ router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => 
     clinic,
     city,
     fees,
-    slotDurationMins
+    slotDurationMins,
+    experienceYears,
+    about,
+    photoBase64,
+    password
   } = req.body;
 
   if (!name || !email) return res.status(400).json({ message: 'Name and email required' });
+  if (!password || String(password).trim().length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
 
-  const existing = await User.findOne({ email });
+  const emailLower = String(email).trim().toLowerCase();
+  const existing = await User.findOne({ email: emailLower });
   if (existing) return res.status(400).json({ message: 'Email already exists' });
 
   const bcrypt = require('bcrypt');
-  const tmpPassword = Math.random().toString(36).slice(-10);
-  const passwordHash = await bcrypt.hash(tmpPassword, 10);
+  const passwordHash = await bcrypt.hash(String(password).trim(), 10);
 
   const user = await User.create({
     name,
-    email,
+    email: emailLower,
     phone,
     passwordHash,
     role: 'doctor',
@@ -49,18 +54,36 @@ router.post('/doctors', authenticate, authorize(['admin']), async (req, res) => 
     specializations: specs,
     clinic: { name: clinic || '', city: city || '' },
     consultationFees: fees ? Number(fees) : undefined,
-    slotDurationMins: slotDurationMins ? Number(slotDurationMins) : undefined
+    slotDurationMins: slotDurationMins ? Number(slotDurationMins) : undefined,
+    experienceYears: experienceYears ? Number(experienceYears) : undefined,
+    about: about || undefined,
+    photoBase64: photoBase64 || undefined
   });
 
   try {
-    if (user.email) await sendMail(user.email, 'Your Doctor Account', `Your account has been created. Email: ${user.email}\nTemporary password: ${tmpPassword}`);
+    if (user.email) await sendMail(user.email, 'Your Doctor Account', `Your account has been created. Email: ${user.email}`);
   } catch (e) {}
 
   res.json({
     user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    profile,
-    tempPassword: tmpPassword
+    profile
   });
+});
+
+// Reset doctor password (admin)
+router.post('/doctors/reset-password', authenticate, authorize(['admin']), async (req, res) => {
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword || String(newPassword).trim().length < 6) {
+    return res.status(400).json({ message: 'Email and newPassword (min 6 chars) required' });
+  }
+  const bcrypt = require('bcrypt');
+  const emailLower = String(email).trim().toLowerCase();
+  const emailRegex = new RegExp('^' + emailLower.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&') + '$', 'i');
+  const user = await User.findOne({ email: emailRegex });
+  if (!user || user.role !== 'doctor') return res.status(404).json({ message: 'Doctor not found' });
+  user.passwordHash = await bcrypt.hash(String(newPassword).trim(), 10);
+  await user.save();
+  res.json({ ok: true });
 });
 
 router.get('/pending-doctors', authenticate, authorize(['admin']), async (req, res) => {

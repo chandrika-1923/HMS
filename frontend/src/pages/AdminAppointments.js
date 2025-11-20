@@ -13,16 +13,28 @@ export default function AdminAppointments() {
       setLoading(true);
       try {
         setError("");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          nav("/admin/login");
+          return;
+        }
         const { data } = await API.get("/admin/appointments");
         setList(data || []);
       } catch (e) {
         setList([]);
-        setError(e.response?.data?.message || e.message || "Failed to load appointments");
+        const status = e.response?.status;
+        if (status === 401 || status === 403) {
+          setError("Please login as admin to view appointments");
+          nav("/admin/login");
+        } else {
+          setError(e.response?.data?.message || e.message || "Failed to load appointments");
+        }
       }
       setLoading(false);
     };
     load();
-  }, []);
+  }, [nav]);
 
   const rows = list.length
     ? list.map((a, i) => (
@@ -56,7 +68,7 @@ export default function AdminAppointments() {
               <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
               <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Appointments</div>
               <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-              <Link to="/admin/doctors/pending" className="block px-3 py-2 rounded-md hover:bg-slate-50">Approvals</Link>
+              
               <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
             </nav>
           </div>

@@ -19,12 +19,27 @@ export default function SearchDoctors() {
   const [list, setList] = useState([]);
   const [specialization, setSpecialization] = useState("");
   const [error, setError] = useState("");
+  const CARD_FALLBACK = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
 
   const search = async () => {
     setError("");
     try {
       const { data } = await API.get("/doctors", { params: { q, specialization } });
-      setList(data);
+      let items = Array.isArray(data) ? data : [];
+
+      if (specialization) {
+        const norm = specialization.trim().toLowerCase();
+        const hasMatches = items.some((d) => (d.specializations || []).some((s) => String(s).toLowerCase().includes(norm)));
+        if (!hasMatches) {
+          const all = await API.get("/doctors");
+          const arr = Array.isArray(all.data) ? all.data : [];
+          items = arr.filter((d) => (d.specializations || []).some((s) => String(s).toLowerCase().includes(norm)));
+        } else {
+          items = items.filter((d) => (d.specializations || []).some((s) => String(s).toLowerCase().includes(norm)));
+        }
+      }
+
+      setList(items);
     } catch (e) {
       setList([]);
       setError(e.response?.data?.message || e.message || "Network Error");
@@ -47,7 +62,7 @@ export default function SearchDoctors() {
                 <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
                 <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
                 <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-                <Link to="/admin/doctors/pending" className="block px-3 py-2 rounded-md hover:bg-slate-50">Approvals</Link>
+                
                 <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Doctors List</div>
               </nav>
             </div>
@@ -63,27 +78,21 @@ export default function SearchDoctors() {
               </button>
             </div>
             {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {list.map((d) => (
-                <div key={d._id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+                <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+                  <div className="relative">
+                  <img
+                    src={d.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
+                    alt="Doctor"
+                    className="w-full h-56 object-cover"
+                    onError={(e) => { if (e.currentTarget.src !== CARD_FALLBACK) e.currentTarget.src = CARD_FALLBACK; }}
+                  />
+                  </div>
                   <div className="p-4">
-                    <div className="relative mb-3">
-                      <img
-                        src={(process.env.PUBLIC_URL || "") + "/doctor3.jpeg"}
-                        alt="Doctor"
-                        className="w-full h-36 object-cover rounded-md"
-                        onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/doctorProfile.png"; }}
-                      />
-                      <span className="absolute top-2 left-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Available</span>
-                    </div>
-                    <h3 className="text-base font-semibold">{d.user?.name}</h3>
-                    <p className="text-sm text-slate-600">{d.specializations?.join(", ") || "--"}</p>
-                    <Link
-                      to={`/doctor/${d.user._id}`}
-                      className="mt-3 inline-block text-indigo-600 hover:text-indigo-800"
-                    >
-                      View Profile
-                    </Link>
+                    <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
+                    <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || "--"}</p>
+                    <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                   </div>
                 </div>
               ))}
@@ -140,27 +149,21 @@ export default function SearchDoctors() {
         </aside>
         <main className="md:col-span-3">
           {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {list.map((d) => (
-              <div key={d._id} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <div key={d._id} className="bg-indigo-50 rounded-xl border border-indigo-100 shadow-sm overflow-hidden">
+                <div className="relative">
+                  <img
+                    src={d.photoBase64 || ((process.env.PUBLIC_URL || "") + "/doctor3.jpeg")}
+                    alt="Doctor"
+                    className="w-full h-56 object-cover"
+                    onError={(e) => { if (e.currentTarget.src !== CARD_FALLBACK) e.currentTarget.src = CARD_FALLBACK; }}
+                  />
+                </div>
                 <div className="p-4">
-                  <div className="relative mb-3">
-                    <img
-                      src={(process.env.PUBLIC_URL || "") + "/doctor3.jpeg"}
-                      alt="Doctor"
-                      className="w-full h-36 object-cover rounded-md"
-                      onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/doctorProfile.png"; }}
-                    />
-                    <span className="absolute top-2 left-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Available</span>
-                  </div>
-                  <h3 className="text-base font-semibold">{d.user?.name}</h3>
-                  <p className="text-sm text-slate-600">{d.specializations?.join(", ") || "--"}</p>
-                  <Link
-                    to={`/doctor/${d.user._id}`}
-                    className="mt-3 inline-block text-indigo-600 hover:text-indigo-800"
-                  >
-                    View Profile
-                  </Link>
+                  <h3 className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</h3>
+                  <p className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || "--"}</p>
+                  <Link to={`/doctor/${d.user._id}`} className="mt-3 inline-block text-indigo-600 hover:text-indigo-800">View Profile</Link>
                 </div>
               </div>
             ))}

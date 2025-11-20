@@ -5,7 +5,7 @@ import API from "../api";
 export default function DoctorProfile() {
   const nav = useNavigate();
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
+  
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -22,12 +22,12 @@ export default function DoctorProfile() {
     const load = async () => {
       const id = localStorage.getItem("userId");
       if (!id) return;
-      setLoading(true);
+      
       try {
         const { data } = await API.get("/doctors", { params: { user: id } });
         setProfile(data?.[0] || null);
       } catch (e) {}
-      setLoading(false);
+      
     };
     load();
   }, []);
@@ -39,6 +39,7 @@ export default function DoctorProfile() {
   const address = profile?.clinic?.address || "7/1, Cross, Basavand, Clinic Road, London";
   const city = profile?.clinic?.city || "London";
   const available = true;
+  const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
 
   const startEdit = () => {
     setError("");
@@ -115,10 +116,10 @@ export default function DoctorProfile() {
             <div className="grid sm:grid-cols-3 gap-6">
               <div>
                 <img
-                  src={(process.env.PUBLIC_URL || "") + "/doctor3.jpeg"}
+                  src={profile?.photoBase64 || DEFAULT_PHOTO}
                   alt="Doctor"
                   className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/doctorProfile.png"; }}
+                  onError={(e) => { if (e.currentTarget.src !== DEFAULT_PHOTO) e.currentTarget.src = DEFAULT_PHOTO; }}
                 />
               </div>
               <div className="sm:col-span-2">

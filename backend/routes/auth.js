@@ -38,7 +38,8 @@ if (!email || !password) return res.status(400).json({ message: 'Missing fields'
   const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
   return res.json({ token, user: { id: admin._id, name: admin.name, email: admin.email, role: admin.role } });
 }
-const user = await User.findOne({ email });
+const emailRegex = new RegExp('^' + reqEmail.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&') + '$', 'i');
+const user = await User.findOne({ email: emailRegex });
 if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 const ok = await bcrypt.compare(password, user.passwordHash);
 if (!ok) return res.status(400).json({ message: 'Invalid credentials' });

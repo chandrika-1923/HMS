@@ -13,7 +13,15 @@ export default function AdminAddDoctor() {
     city: "",
     fees: "",
     slotDurationMins: "15",
+    experienceYears: "",
+    about: "",
+    password: "",
+    photoBase64: "",
   });
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetStatus, setResetStatus] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -32,13 +40,36 @@ export default function AdminAddDoctor() {
         city: form.city,
         fees: form.fees,
         slotDurationMins: form.slotDurationMins,
+        experienceYears: form.experienceYears ? Number(form.experienceYears) : undefined,
+        about: form.about,
+        password: form.password,
+        photoBase64: form.photoBase64,
       };
-      const { data } = await API.post("/admin/doctors", payload);
-      alert(`Doctor created. Temporary password: ${data?.tempPassword || 'sent via email'}`);
-      setForm({ name: "", email: "", phone: "", specializations: "", clinic: "", city: "", fees: "", slotDurationMins: "15" });
+      await API.post("/admin/doctors", payload);
+      alert("Doctor created successfully.");
+      setForm({ name: "", email: "", phone: "", specializations: "", clinic: "", city: "", fees: "", slotDurationMins: "15", experienceYears: "", about: "", password: "", photoBase64: "" });
       nav("/admin/doctors");
     } catch (err) {
       alert(err.response?.data?.message || err.message || "Failed to create doctor");
+    }
+  };
+
+  const resetSubmit = async (e) => {
+    e.preventDefault();
+    setResetStatus("");
+    setResetLoading(true);
+    try {
+      await API.post("/admin/doctors/reset-password", {
+        email: resetEmail.trim(),
+        newPassword: resetPassword.trim(),
+      });
+      setResetStatus("Password reset successfully.");
+      setResetEmail("");
+      setResetPassword("");
+    } catch (err) {
+      setResetStatus(err.response?.data?.message || err.message || "Failed to reset password");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -52,7 +83,7 @@ export default function AdminAddDoctor() {
               <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
               <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
               <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Add Doctor</div>
-              <Link to="/admin/doctors/pending" className="block px-3 py-2 rounded-md hover:bg-slate-50">Approvals</Link>
+              
               <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
             </nav>
           </div>
@@ -104,8 +135,46 @@ export default function AdminAddDoctor() {
             </div>
           </div>
 
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Experience (years)</label>
+              <input name="experienceYears" value={form.experienceYears} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="e.g., 5" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input name="password" type="password" value={form.password} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="Set doctor password" />
+            </div>
+          </div>
+
+          <label className="block text-sm font-medium text-slate-700 mb-1">About</label>
+          <textarea name="about" value={form.about} onChange={onChange} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="Short bio" rows={4} />
+
+          <label className="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
+          <input type="file" accept="image/*" className="border border-slate-300 rounded-md p-2 w-full mb-3" onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              setForm((f) => ({ ...f, photoBase64: String(reader.result || "") }));
+            };
+            reader.readAsDataURL(file);
+          }} />
+
           <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">Create Doctor</button>
         </form>
+
+        <hr className="my-6" />
+        <div className="max-w-xl">
+          <h2 className="text-xl font-semibold mb-3">Reset Doctor Password</h2>
+          <form onSubmit={resetSubmit}>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Doctor Email</label>
+            <input value={resetEmail} onChange={(e)=>setResetEmail(e.target.value)} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="doctor@example.com" />
+            <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+            <input type="password" value={resetPassword} onChange={(e)=>setResetPassword(e.target.value)} className="border border-slate-300 rounded-md p-2 w-full mb-3" placeholder="New password (min 6 chars)" />
+            {resetStatus && <div className={`text-sm mb-3 ${resetStatus.includes('successfully') ? 'text-green-700' : 'text-red-600'}`}>{resetStatus}</div>}
+            <button className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-md" disabled={resetLoading}>{resetLoading? 'Updating...' : 'Reset Password'}</button>
+          </form>
+        </div>
       </div>
         </main>
       </div>

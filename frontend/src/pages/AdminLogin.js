@@ -68,7 +68,7 @@ export default function AdminLogin() {
             </button>
           </form>
           <div className="mt-3 text-sm text-slate-700">
-            Doctor Login? <Link to="/login" className="text-indigo-600 hover:text-indigo-800">Click here</Link>
+            Doctor Login? <Link to="/doctor/login" className="text-indigo-600 hover:text-indigo-800">Click here</Link>
             <div className="mt-2">
               <Link to="/forgot" className="text-slate-700 hover:text-indigo-700">Forgot password?</Link>
             </div>

@@ -6,7 +6,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("patient");
+  const role = "patient";
 
   const nav = useNavigate();
 
@@ -21,13 +21,8 @@ export default function Register() {
         role,
       });
 
-      if (role === "doctor") {
-        alert("Registration submitted. Admin approval is required before you can login as a doctor.");
-        nav("/doctor/login");
-      } else {
-        localStorage.setItem("token", res.data.token);
-        nav("/search");
-      }
+      localStorage.setItem("token", res.data.token);
+      nav("/search");
     } catch (err) {
       alert(err.response?.data?.message || err.message);
     }
@@ -64,15 +59,8 @@ export default function Register() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-          <select
-            className="border border-slate-300 rounded-md p-2 w-full mb-4 focus:outline-none focus:ring-4 focus:ring-indigo-100"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
-            <option value="patient">Patient</option>
-            <option value="doctor">Doctor</option>
-          </select>
+          <input type="hidden" value={role} readOnly />
+          <div className="mb-4 text-sm text-slate-600">Creating a patient account</div>
           <button className="group w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md flex items-center justify-center gap-2">
             <span>Register</span>
             <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
